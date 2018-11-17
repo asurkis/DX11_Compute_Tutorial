@@ -103,32 +103,32 @@ void InitSwapChain()
     HRESULT result;
 
     DXGI_SWAP_CHAIN_DESC swapChainDesc;
-    swapChainDesc.Flags = 0;
-    // Задаем окно для вывода
-    swapChainDesc.OutputWindow = hWnd;
-    // Оконный режим
-    swapChainDesc.Windowed = TRUE;
+    // Разрмер совпадает с размером клиентской части окна
+    swapChainDesc.BufferDesc.Width = windowWidth;
+    swapChainDesc.BufferDesc.Height = windowHeight;
+    // Ограничение количества кадров в секунду задается в виде рационального числа
+    // Т.к. нам нужна максимальная частота кадров, отключаем
+    swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
+    swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+    // Формат вывода -- 32-битный RGBA
+    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    // Не задаем масштабирования при выводе
+    swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    // Не используем сглаживание
+    swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.SampleDesc.Quality = 0;
     // Используем SwapChain для вывода
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     // Один "задний" (не отображаемый) буфер
     swapChainDesc.BufferCount = 1;
-    // Формат вывода -- 32-битный RGBA
-    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    // Ограничение количества кадров в секунду задается в виде рационального числа
-    // Т.к. нам это не нужно, задаем 0
-    swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
-    swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-    // Не задаем масштабирования при выводе
-    swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    // Разрмер совпадает с размером клиентской части окна
-    swapChainDesc.BufferDesc.Width = windowWidth;
-    swapChainDesc.BufferDesc.Height = windowHeight;
-    // Не используем сглаживание
-    swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.SampleDesc.Quality = 0;
+    // Задаем окно для вывода
+    swapChainDesc.OutputWindow = hWnd;
+    // Оконный режим
+    swapChainDesc.Windowed = TRUE;
     // Отбрасываем старую информацию из буфера при выводе на экран
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapChainDesc.Flags = 0;
 
     // Используем DirectX 11.0, т.к. его нам достаточно
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
@@ -307,18 +307,18 @@ void InitBuffers()
 
     // Описание буфера
     D3D11_BUFFER_DESC desc;
-    // Буфер позиций используем и для отрисовки, и при вычислениях как массив
-    desc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_UNORDERED_ACCESS;
     // Его размер
     desc.ByteWidth = sizeof(float[2 * PARTICLE_COUNT]);
+    // Доступ на чтение и запись
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    // Буфер позиций используем и для отрисовки, и при вычислениях как массив
+    desc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_UNORDERED_ACCESS;
     // Доступ с процессора не нужен
     desc.CPUAccessFlags = 0;
     // Дополнительные флаги не нужны
     desc.MiscFlags = 0;
     // Размер одного элемента буфера
     desc.StructureByteStride = sizeof(float[2]);
-    // Доступ на чтение и запись
-    desc.Usage = D3D11_USAGE_DEFAULT;
 
     // Инициализируем массив позиций
     for (int i = 0; i < 2 * PARTICLE_COUNT; i++)
@@ -358,16 +358,16 @@ void InitUAV()
 
     // Описание доступа к буферу из шейдера как к массиву
     D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
-    // Доступ к буферу, есть также варианты с текстурами
-    desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     // Двумерный вектор из 32-битных вещественных чисел
     desc.Format = DXGI_FORMAT_R32G32_FLOAT;
+    // Доступ к буферу, есть также варианты с текстурами
+    desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     // Доступ с первого элемента
     desc.Buffer.FirstElement = 0;
-    // Без дополнительных флагов
-    desc.Buffer.Flags = 0;
     // Количество элементов
     desc.Buffer.NumElements = PARTICLE_COUNT;
+    // Без дополнительных флагов
+    desc.Buffer.Flags = 0;
 
     // Инициализация доступа к буферу позиций
     result = device->CreateUnorderedAccessView(positionBuffer, &desc,
