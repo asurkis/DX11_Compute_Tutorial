@@ -1,0 +1,5 @@
+#include "resource.h"
+
+IDR_BYTECODE_COMPUTE ShaderObject "compute.cso"
+IDR_BYTECODE_VERTEX ShaderObject "vertex.cso"
+IDR_BYTECODE_PIXEL ShaderObject "pixel.cso"
