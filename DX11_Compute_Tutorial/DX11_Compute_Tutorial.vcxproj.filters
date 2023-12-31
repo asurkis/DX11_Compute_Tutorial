@@ -42,6 +42,9 @@
     <None Include="..\Debug\compute.cso" />
     <None Include="..\Debug\pixel.cso" />
     <None Include="..\Debug\vertex.cso" />
+    <None Include="common.hlsli">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

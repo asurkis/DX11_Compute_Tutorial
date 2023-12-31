@@ -1,4 +1,9 @@
-float4 main(float2 input: POSITION): SV_POSITION
+#include "common.hlsli"
+
+VertexOut main(float2 pos : POSITION, float3 col: COLOR)
 {
-    return float4(input, 0, 1);
+    VertexOut vert;
+    vert.pos = float4(pos, 0, 1);
+    vert.col = col;
+    return vert;
 }

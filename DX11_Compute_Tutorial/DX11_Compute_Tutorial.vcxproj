@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{3296F879-F1A6-40E4-96B4-A48F65BA4322}</ProjectGuid>
     <RootNamespace>DX11ComputeTutorial</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -165,6 +165,7 @@
     <None Include="..\Debug\compute.cso" />
     <None Include="..\Debug\pixel.cso" />
     <None Include="..\Debug\vertex.cso" />
+    <None Include="common.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

@@ -1,4 +1,6 @@
-float4 main(float4 input: SV_POSITION): SV_TARGET
+#include "common.hlsli"
+
+float4 main(VertexOut vert) : SV_TARGET
 {
-    return float4(1, 1, 1, 1);
+    return float4(vert.col, 1);
 }

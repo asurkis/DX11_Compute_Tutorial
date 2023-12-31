@@ -28,7 +28,7 @@ void InitWindows()
     windowWidth = 800;
     windowHeight = 800;
 
-    WNDCLASS wc;
+    WNDCLASS wc = {};
     // Без дополнительных параметров
     wc.style = 0;
     // Задаем обработчик событий
@@ -55,7 +55,7 @@ void InitWindows()
 
     // Стандартное окно -- имеет заголовок, можно изменить размер и т.д.
     DWORD dwStyle = WS_OVERLAPPEDWINDOW;
-    RECT rect;
+    RECT rect = {};
     // Клиентская область (внутри рамки) по центру экрана и заданного размера
     rect.left = (GetSystemMetrics(SM_CXSCREEN) - windowWidth) / 2;
     rect.top = (GetSystemMetrics(SM_CYSCREEN) - windowHeight) / 2;
@@ -94,15 +94,15 @@ void DisposeWindows()
     UnregisterClass(_T("WindowClass1"), hInstance);
 }
 
-IDXGISwapChain *swapChain;
-ID3D11Device *device;
-ID3D11DeviceContext *deviceContext;
+IDXGISwapChain* swapChain;
+ID3D11Device* device;
+ID3D11DeviceContext* deviceContext;
 
 void InitSwapChain()
 {
     HRESULT result;
 
-    DXGI_SWAP_CHAIN_DESC swapChainDesc;
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     // Разрмер совпадает с размером клиентской части окна
     swapChainDesc.BufferDesc.Width = windowWidth;
     swapChainDesc.BufferDesc.Height = windowHeight;
@@ -166,16 +166,17 @@ void DisposeSwapChain()
     swapChain->Release();
 }
 
-ID3D11RenderTargetView *renderTargetView;
+ID3D11RenderTargetView* renderTargetView;
 
 void InitRenderTargetView()
 {
     HRESULT result;
-    ID3D11Texture2D *backBuffer;
+    ID3D11Texture2D* backBuffer = NULL;
 
     // Берем "задний" буфер из SwapChain
-    result = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&backBuffer);
+    result = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
     assert(SUCCEEDED(result));
+    assert(backBuffer);
 
     // Инициализируем доступ к буферу для записи и для отрисовки
     result = device->CreateRenderTargetView(backBuffer, NULL, &renderTargetView);
@@ -191,7 +192,7 @@ void InitRenderTargetView()
     deviceContext->OMSetRenderTargets(1, &renderTargetView, NULL);
 
     // Задаем область отрисовки
-    D3D11_VIEWPORT viewport;
+    D3D11_VIEWPORT viewport = {};
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
     viewport.Width = (FLOAT)windowWidth;
@@ -206,11 +207,11 @@ void DisposeRenderTargetView()
     renderTargetView->Release();
 }
 
-ID3D11ComputeShader *computeShader;
-ID3D11VertexShader *vertexShader;
-ID3D11PixelShader *pixelShader;
+ID3D11ComputeShader* computeShader;
+ID3D11VertexShader* vertexShader;
+ID3D11PixelShader* pixelShader;
 
-ID3D11InputLayout *inputLayout;
+ID3D11InputLayout* inputLayout;
 
 void InitShaders()
 {
@@ -239,7 +240,7 @@ void InitShaders()
     src = FindResource(hInstance, MAKEINTRESOURCE(IDR_BYTECODE_PIXEL), _T("ShaderObject"));
     res = LoadResource(hInstance, src);
     result = device->CreatePixelShader(res, SizeofResource(hInstance, src),
-                                       NULL, &pixelShader);
+        NULL, &pixelShader);
     assert(SUCCEEDED(result));
     FreeResource(res);
 
@@ -247,30 +248,43 @@ void InitShaders()
     src = FindResource(hInstance, MAKEINTRESOURCE(IDR_BYTECODE_VERTEX), _T("ShaderObject"));
     res = LoadResource(hInstance, src);
     result = device->CreateVertexShader(res, SizeofResource(hInstance, src),
-                                        NULL, &vertexShader);
+        NULL, &vertexShader);
     assert(SUCCEEDED(result));
 
     // Задаем, как в вершинный шейдер будут вводиться данные
-    // Описание первого (и единственного) аргумента функции
-    D3D11_INPUT_ELEMENT_DESC inputDesc;
+    // Зададим два аргумента --- позицию и цвет точки
+    D3D11_INPUT_ELEMENT_DESC inputDescs[2] = {};
+    // Описание первого аргумента функции
     // Семантическое имя аргумента
-    inputDesc.SemanticName = "POSITION";
+    inputDescs[0].SemanticName = "POSITION";
     // Нужно только в случае, если элементов с данным семантическим именем больше одного
-    inputDesc.SemanticIndex = 0;
+    inputDescs[0].SemanticIndex = 0;
     // Двумерный вектор из 32-битных вещественных чисел
-    inputDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
-    // Необязательный аргумент
-    inputDesc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-    // Для каждой вершины
-    inputDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    inputDescs[0].Format = DXGI_FORMAT_R32G32_FLOAT;
     // Первый параметр
-    inputDesc.InputSlot = 0;
+    inputDescs[0].InputSlot = 0;
+    // Необязательный аргумент
+    inputDescs[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    // Для каждой вершины
+    inputDescs[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     // Используем вершины для отрисовки
-    inputDesc.InstanceDataStepRate = 0;
+    inputDescs[0].InstanceDataStepRate = 0;
+
+    // Описание второго аргумента функции, аналогично
+    inputDescs[1].SemanticName = "COLOR";
+    inputDescs[1].SemanticIndex = 0;
+    // Цвет --- вектор из трёх 32-битных вещественных чисел
+    inputDescs[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+    // Второй параметр
+    inputDescs[1].InputSlot = 1;
+    inputDescs[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    inputDescs[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    inputDescs[1].InstanceDataStepRate = 0;
+
 
     result = device->CreateInputLayout(
         // Массив описаний аргументов и его длина
-        &inputDesc, 1,
+        inputDescs, 2,
         // Байткод и его длина
         res, SizeofResource(hInstance, src),
         // Структура ввода
@@ -288,16 +302,17 @@ void DisposeShaders()
     pixelShader->Release();
 }
 
-ID3D11Buffer *positionBuffer;
-ID3D11Buffer *velocityBuffer;
+ID3D11Buffer* positionBuffer;
+ID3D11Buffer* colorBuffer;
+ID3D11Buffer* velocityBuffer;
 
 void InitBuffers()
 {
     HRESULT result;
 
-    float *data = new float[2 * PARTICLE_COUNT];
+    float* data = new float[3 * PARTICLE_COUNT];
     // Описание массива, который будет записан в буфер при создании
-    D3D11_SUBRESOURCE_DATA subresource;
+    D3D11_SUBRESOURCE_DATA subresource = {};
     // Указатель на массив
     subresource.pSysMem = data;
     // Имеет значение только для текстур
@@ -306,7 +321,7 @@ void InitBuffers()
     subresource.SysMemSlicePitch = 0;
 
     // Описание буфера
-    D3D11_BUFFER_DESC desc;
+    D3D11_BUFFER_DESC desc = {};
     // Его размер
     desc.ByteWidth = sizeof(float[2 * PARTICLE_COUNT]);
     // Доступ на чтение и запись
@@ -339,6 +354,18 @@ void InitBuffers()
     result = device->CreateBuffer(&desc, &subresource, &velocityBuffer);
     assert(SUCCEEDED(result));
 
+    desc.ByteWidth = sizeof(float[3 * PARTICLE_COUNT]);
+    // Цвета используются только в вершинном шейдере
+    desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    // Цвет, в отличие от позиции и скорости --- 3 числа
+    desc.StructureByteStride = sizeof(float[3]);
+    // Инициализируем массив цветов
+    for (int i = 0; i < 3 * PARTICLE_COUNT; i++)
+        data[i] = 1.0f * rand() / RAND_MAX;
+
+    result = device->CreateBuffer(&desc, &subresource, &colorBuffer);
+    assert(SUCCEEDED(result));
+
     // Освобождаем память, использованную для инициализации
     delete[] data;
 }
@@ -346,18 +373,19 @@ void InitBuffers()
 void DisposeBuffers()
 {
     positionBuffer->Release();
+    colorBuffer->Release();
     velocityBuffer->Release();
 }
 
-ID3D11UnorderedAccessView *positionUAV;
-ID3D11UnorderedAccessView *velocityUAV;
+ID3D11UnorderedAccessView* positionUAV;
+ID3D11UnorderedAccessView* velocityUAV;
 
 void InitUAV()
 {
     HRESULT result;
 
     // Описание доступа к буферу из шейдера как к массиву
-    D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC desc = {};
     // Двумерный вектор из 32-битных вещественных чисел
     desc.Format = DXGI_FORMAT_R32G32_FLOAT;
     // Доступ к буферу, есть также варианты с текстурами
@@ -371,12 +399,12 @@ void InitUAV()
 
     // Инициализация доступа к буферу позиций
     result = device->CreateUnorderedAccessView(positionBuffer, &desc,
-                                               &positionUAV);
-    assert(!result);
+        &positionUAV);
+    assert(SUCCEEDED(result));
     // Инициализация доступа к буферу скоростей
     result = device->CreateUnorderedAccessView(velocityBuffer, &desc,
-                                               &velocityUAV);
-    assert(!result);
+        &velocityUAV);
+    assert(SUCCEEDED(result));
 }
 
 void DisposeUAV()
@@ -430,14 +458,14 @@ void Frame()
     deviceContext->ClearRenderTargetView(renderTargetView, clearColor);
 
     // Двумерные вектора из 32-битных вещественных идут подряд
-    UINT stride = sizeof(float[2]);
-    UINT offset = 0;
+    UINT strides[] = { sizeof(float[2]), sizeof(float[3]) };
+    UINT offsets[] = { 0, 0 };
 
-    ID3D11Buffer *nullBuffer = NULL;
-    ID3D11UnorderedAccessView *nullUAV = NULL;
+    ID3D11Buffer* nullBuffer = NULL;
+    ID3D11UnorderedAccessView* nullUAV = NULL;
 
     // Убираем доступ вершинного шейдера к буферу позиций
-    deviceContext->IASetVertexBuffers(0, 1, &nullBuffer, &stride, &offset);
+    deviceContext->IASetVertexBuffers(0, 1, &nullBuffer, strides, offsets);
     // Устанавливаем доступ вычислительного шейдера к буферу позиций
     deviceContext->CSSetUnorderedAccessViews(0, 1, &positionUAV, NULL);
     // Вызываем вычислительный шейдер
@@ -445,13 +473,14 @@ void Frame()
 
     // Убираем доступ вычислительного шейдера к буферу позиций
     deviceContext->CSSetUnorderedAccessViews(0, 1, &nullUAV, NULL);
-    // Устанавливаем доступ вершинного шейдера к буферу позиций
-    deviceContext->IASetVertexBuffers(0, 1, &positionBuffer, &stride, &offset);
+    // Устанавливаем доступ вершинного шейдера к буферам позиций и цветов
+    ID3D11Buffer* vertBuffers[] = { positionBuffer, colorBuffer };
+    deviceContext->IASetVertexBuffers(0, 2, vertBuffers, strides, offsets);
     // Вызываем отрисовку
     deviceContext->Draw(PARTICLE_COUNT, 0);
 
     // Выводим изображение на экран
-    swapChain->Present(0, 0);
+    swapChain->Present(1, 0);
 }
 
 void ResizeSwapChain()
